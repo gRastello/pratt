@@ -22,25 +22,22 @@ impl Parser {
         if token.is_number() {
             Ok(Box::new(NumberParslet {}))
         } else {
-            Err(ParseError::new("no parselet found for this token", token))
+            match token.kind {
+                TokenKind::LeftParen => Ok(Box::new(ParenthesisParselet {})),
+                _ => Err(ParseError::new("no parselet found for this token", token)),
+            }
         }
     }
 
     /// Dispatch a consequent parselet.
-    fn get_consequent_parselet(
-        &self,
-        token: &Token,
-    ) -> Result<Box<ConsequentParselet>, ParseError> {
+    fn get_consequent_parselet(&self, token: &Token) -> Option<Box<ConsequentParselet>> {
         match token.kind {
-            TokenKind::Plus => Ok(Box::new(OperatorParselet::new(TokenKind::Plus))),
-            TokenKind::Minus => Ok(Box::new(OperatorParselet::new(TokenKind::Minus))),
-            TokenKind::Star => Ok(Box::new(OperatorParselet::new(TokenKind::Star))),
-            TokenKind::Slash => Ok(Box::new(OperatorParselet::new(TokenKind::Slash))),
-            TokenKind::Cap => Ok(Box::new(OperatorParselet::new(TokenKind::Cap))),
-            _ => Err(ParseError::new(
-                "no parselet found for this token (expected an operator)",
-                token,
-            )),
+            TokenKind::Plus => Some(Box::new(OperatorParselet::new(TokenKind::Plus))),
+            TokenKind::Minus => Some(Box::new(OperatorParselet::new(TokenKind::Minus))),
+            TokenKind::Star => Some(Box::new(OperatorParselet::new(TokenKind::Star))),
+            TokenKind::Slash => Some(Box::new(OperatorParselet::new(TokenKind::Slash))),
+            TokenKind::Cap => Some(Box::new(OperatorParselet::new(TokenKind::Cap))),
+            _ => None,
         }
     }
 
@@ -74,7 +71,10 @@ impl Parser {
                 break;
             }
 
-            let consequent_parselet = self.get_consequent_parselet(&current_token)?;
+            let consequent_parselet = match self.get_consequent_parselet(&current_token) {
+                Some(parselet) => parselet,
+                None => break,
+            };
             if consequent_parselet.binding_power() <= current_binding_power {
                 break;
             }
@@ -98,6 +98,25 @@ impl InitialParselet for NumberParslet {
     fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError> {
         let token = parser.advance();
         Ok(Expr::Literal(Literal::new(token.clone())))
+    }
+}
+
+struct ParenthesisParselet {}
+
+impl InitialParselet for ParenthesisParselet {
+    fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError> {
+        // Consume the '('.
+        parser.advance();
+
+        let expr = parser.actually_parse(0)?;
+
+        let next_token = parser.peek();
+        if let TokenKind::RightParen = next_token.kind {
+            parser.advance();
+            Ok(Expr::Grouping(Grouping::new(expr)))
+        } else {
+            Err(ParseError::new("expecting ')'", next_token))
+        }
     }
 }
 

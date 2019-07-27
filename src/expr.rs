@@ -4,6 +4,7 @@ use crate::token::*;
 pub trait ExprVisitor {
     fn visit_binary(&mut self, expr: &Binary);
     fn visit_literal(&mut self, expr: &Literal);
+    fn visit_grouping(&mut self, expt: &Grouping);
 }
 
 /// An expression.
@@ -11,12 +12,14 @@ pub trait ExprVisitor {
 pub enum Expr {
     Binary(Binary),
     Literal(Literal),
+    Grouping(Grouping),
 }
 
 pub fn walk_expr<V: ExprVisitor>(visitor: &mut V, expr: &Expr) {
     match expr {
         Expr::Binary(expr) => visitor.visit_binary(expr),
         Expr::Literal(expr) => visitor.visit_literal(expr),
+        Expr::Grouping(expr) => visitor.visit_grouping(expr),
     }
 }
 
@@ -49,5 +52,20 @@ impl Literal {
     /// Make a new literal from a Token.
     pub fn new(token: Token) -> Self {
         Literal { token }
+    }
+}
+
+/// A grouping (i.e. an expression between parenthesis).
+#[derive(Debug)]
+pub struct Grouping {
+    pub expression: Box<Expr>,
+}
+
+impl Grouping {
+    /// Make a new grouping from an expression.
+    pub fn new(expr: Expr) -> Self {
+        Grouping {
+            expression: Box::new(expr),
+        }
     }
 }

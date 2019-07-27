@@ -27,4 +27,10 @@ impl ExprVisitor for PrettyPrinter {
     fn visit_literal(&mut self, expr: &Literal) {
         self.pretty_text.push_str(&expr.token.lexeme);
     }
+
+    fn visit_grouping(&mut self, expr: &Grouping) {
+        // self.pretty_text.push('[');
+        walk_expr(self, &expr.expression);
+        // self.pretty_text.push(']');
+    }
 }

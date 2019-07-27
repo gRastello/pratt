@@ -33,6 +33,10 @@ pub enum TokenKind {
     Slash,
     /// Exponentiation operator.
     Cap,
+    /// Left parenthesis.
+    LeftParen,
+    /// Right patenthesis.
+    RightParen,
     /// EOF token.
     Eof,
 }

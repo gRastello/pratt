@@ -91,6 +91,8 @@ impl Lexer {
             '*' => self.add_token(TokenKind::Star),
             '/' => self.add_token(TokenKind::Slash),
             '^' => self.add_token(TokenKind::Cap),
+            '(' => self.add_token(TokenKind::LeftParen),
+            ')' => self.add_token(TokenKind::RightParen),
             _ => {
                 if c.is_digit(10) {
                     if let Err(err) = self.number() {
