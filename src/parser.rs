@@ -54,7 +54,16 @@ impl Parser {
 
     /// Parse the tokens into an expression.
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        self.actually_parse(0)
+        let parsed_expr = self.actually_parse(0)?;
+
+        // Report a warning if it didn't parsed the whole expression.
+        if let TokenKind::Eof = self.peek().kind {
+        } else {
+            println!("warning: it wasn't possible to parse the entire expression")
+        }
+
+        // Return the parsed expresssion.
+        Ok(parsed_expr)
     }
 
     /// The actual parsing function.
