@@ -7,8 +7,6 @@ pub struct Parser {
     tokens: Vec<Token>,
     /// Index of current token.
     current: usize,
-    // Left parselets (led).
-    // consequent_parselets: Vec<Box<ConsequentParselet>>,
 }
 
 impl Parser {
@@ -20,10 +18,10 @@ impl Parser {
     /// Dispatch an initial parselet.
     fn get_initial_parselet(&self, token: &Token) -> Result<Box<InitialParselet>, ParseError> {
         if token.is_number() {
-            Ok(Box::new(NumberParslet {}))
+            Ok(Box::new(NumberParselet::new()))
         } else {
             match token.kind {
-                TokenKind::LeftParen => Ok(Box::new(ParenthesisParselet {})),
+                TokenKind::LeftParen => Ok(Box::new(ParenthesisParselet::new())),
                 _ => Err(ParseError::new("no parselet found for this token", token)),
             }
         }
@@ -92,9 +90,16 @@ trait InitialParselet {
     fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError>;
 }
 
-struct NumberParslet {}
+struct NumberParselet {}
 
-impl InitialParselet for NumberParslet {
+impl NumberParselet {
+    /// Make a new number parselet.
+    fn new() -> Self {
+        NumberParselet {}
+    }
+}
+
+impl InitialParselet for NumberParselet {
     fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError> {
         let token = parser.advance();
         Ok(Expr::Literal(Literal::new(token.clone())))
@@ -102,6 +107,13 @@ impl InitialParselet for NumberParslet {
 }
 
 struct ParenthesisParselet {}
+
+impl ParenthesisParselet {
+    /// Make a new parenthesis parselet.
+    fn new() -> Self {
+        ParenthesisParselet {}
+    }
+}
 
 impl InitialParselet for ParenthesisParselet {
     fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError> {
