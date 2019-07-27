@@ -38,7 +38,7 @@ impl Parser {
             TokenKind::Slash => Ok(Box::new(OperatorParselet::new(TokenKind::Slash))),
             TokenKind::Cap => Ok(Box::new(OperatorParselet::new(TokenKind::Cap))),
             _ => Err(ParseError::new(
-                "no parselet found for this token (maybe this is not an operator?)",
+                "no parselet found for this token (expected an operator)",
                 token,
             )),
         }
