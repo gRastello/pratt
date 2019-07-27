@@ -17,8 +17,20 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
+    /// Dispatch an initial parselet.
+    fn get_initial_parselet(&self, token: &Token) -> Result<Box<InitialParselet>, ParseError> {
+        if token.is_number() {
+            Ok(Box::new(NumberParslet {}))
+        } else {
+            Err(ParseError::new("no parselet found for this token", token))
+        }
+    }
+
     /// Dispatch a consequent parselet.
-    fn get_consequent_parselet(&self, token: &Token) -> Result<Box<ConsequentParselet>, ParseError> {
+    fn get_consequent_parselet(
+        &self,
+        token: &Token,
+    ) -> Result<Box<ConsequentParselet>, ParseError> {
         match token.kind {
             TokenKind::Plus => Ok(Box::new(OperatorParselet::new(TokenKind::Plus))),
             TokenKind::Minus => Ok(Box::new(OperatorParselet::new(TokenKind::Minus))),
@@ -52,12 +64,9 @@ impl Parser {
 
     /// The actual parsing function.
     fn actually_parse(&mut self, current_binding_power: u8) -> Result<Expr, ParseError> {
-        // Check that the first token is a number.
-        let first_token = self.advance();
-        if !first_token.is_number() {
-            return Err(ParseError::new("expected number", first_token));
-        }
-        let mut left_expr = Expr::Literal(Literal::new(first_token.clone()));
+        let first_token = self.peek();
+        let initial_parselet = self.get_initial_parselet(first_token)?;
+        let mut left_expr = initial_parselet.parse(self)?;
 
         loop {
             let current_token = self.peek().clone();
@@ -78,7 +87,21 @@ impl Parser {
     }
 }
 
-/// Trait for consequent parselets.
+/// Trait for initial (nud) parselets.
+trait InitialParselet {
+    fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError>;
+}
+
+struct NumberParslet {}
+
+impl InitialParselet for NumberParslet {
+    fn parse(&self, parser: &mut Parser) -> Result<Expr, ParseError> {
+        let token = parser.advance();
+        Ok(Expr::Literal(Literal::new(token.clone())))
+    }
+}
+
+/// Trait for consequent (led) parselets.
 trait ConsequentParselet {
     /// Return the operator's binding power.
     fn binding_power(&self) -> u8;
